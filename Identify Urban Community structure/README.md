@@ -22,7 +22,7 @@ pyIUCS relies on Python 3.7.
 - copy
 - random
 
-### Liscence
+### License
 
 Codes and related paper are still under development. Public use and reprinting are temporarily prohibited. It is not allowed to be used for any commercial purposes without the author's permission.
 
