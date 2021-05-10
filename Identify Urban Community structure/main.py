@@ -1,6 +1,6 @@
 from initial import initial
-from model.hierarchical_aggregation import ha
-from model.node_level_adjustment import nla
+from model.hierarchicalAggregation import ha
+from model.nodeLevelAdjustment import nla
 from save_result import save_result
 
 import numpy as np
@@ -35,6 +35,6 @@ c_num = node_num
 partition_fast = {}
 for i in range(c_num): partition_fast[i] = [i]
 
-partition_fast, c_num, mvcm_np, NC = ha(c_num, partition_fast)
-partition_fast = nla(c_num, partition_fast, mvcm_np, NC)
+partition_fast, c_num, mvcm_np, NC = ha(c_num, partition_fast, adj, features, degree, mm, m, poi_num, node_num, lamda, threshold)
+partition_fast = nla(c_num, partition_fast, mvcm_np, NC, sliding_window_length, node_num, adj, degree, mm, m, poi_num, epoch_num, lamda, features)
 save_result(partition_fast)

@@ -1,19 +1,18 @@
-from model.gain import CM_faster, MVCM_faster, Modularity
-import main
+from model.calGain import CM_faster, MVCM_faster, Modularity
 
 import numpy as np
 
-def ha(c_num, partition_fast):
+def ha(c_num, partition_fast, adj, features, degree, mm, m, poi_num, node_num, lamda, threshold):
     # 初始化最大值追踪标记
     max_i = -1
     max_j = -1
     # 初始化社区adj和增益矩阵
-    adj_evaluate = main.adj
-    gain_total = np.zeros_like(main.adj)
+    adj_evaluate = adj
+    gain_total = np.zeros_like(adj)
     # 构建每个社区的点数向量
     NC = np.ones(c_num)
     # 维护目标优化功能dui
-    mvcm_np = main.features / main.threshold
+    mvcm_np = features / threshold
     # 初始化社区到节点列表的字典
     while 1:
         max_gain = -1
@@ -25,17 +24,17 @@ def ha(c_num, partition_fast):
                     # 求modularity的增益
                     adj_tmp = adj_evaluate[i, j]
                     if adj_tmp != 0:
-                        a = main.degree[partition_fast[i]]
-                        b = main.degree[partition_fast[j]]
+                        a = degree[partition_fast[i]]
+                        b = degree[partition_fast[j]]
                         kk = np.sum(np.dot(a[:, np.newaxis], b[np.newaxis, :]))
-                        gain = adj_tmp - kk / main.mm
+                        gain = adj_tmp - kk / mm
                         gain_tmp += gain
                     else:
                         gain = 0
                     # 求mvcm的增益
-                    gain_cm = (NC[i] + NC[j]) * CM_faster(mvcm_np[i] + mvcm_np[j], main.poi_num) - NC[i] * \
-                            CM_faster(mvcm_np[i], main.poi_num) - NC[j] * CM_faster(mvcm_np[j], main.poi_num)
-                    gain_tmp += main.lamda * main.m * gain_cm / main.node_num
+                    gain_cm = (NC[i] + NC[j]) * CM_faster(mvcm_np[i] + mvcm_np[j], poi_num) - NC[i] * \
+                            CM_faster(mvcm_np[i], poi_num) - NC[j] * CM_faster(mvcm_np[j], poi_num)
+                    gain_tmp += lamda * m * gain_cm / node_num
                     # 聚合多目标增益
                     gain_total[i, j] = gain_tmp
                     if gain_tmp > max_gain:
@@ -49,15 +48,15 @@ def ha(c_num, partition_fast):
                 # 求modularity的增益
                 adj_tmp = adj_evaluate[i, j]
                 if adj_tmp != 0:
-                    a = main.degree[partition_fast[i]]
-                    b = main.degree[partition_fast[j]]
+                    a = degree[partition_fast[i]]
+                    b = degree[partition_fast[j]]
                     kk = np.sum(np.dot(a[:, np.newaxis], b[np.newaxis, :]))
-                    gain_tmp = adj_tmp - kk / main.mm
+                    gain_tmp = adj_tmp - kk / mm
                 # 求mvcm的增益
-                gain_tmp += main.lamda * main.m * (
-                            (NC[i] + NC[j]) * CM_faster(mvcm_np[i] + mvcm_np[j], main.poi_num) - NC[i] * CM_faster(mvcm_np[i],
-                                                                                                              main.poi_num) - NC[
-                                j] * CM_faster(mvcm_np[j], main.poi_num)) / main.node_num
+                gain_tmp += lamda * m * (
+                            (NC[i] + NC[j]) * CM_faster(mvcm_np[i] + mvcm_np[j], poi_num) - NC[i] * CM_faster(mvcm_np[i],
+                                                                                                              poi_num) - NC[
+                                j] * CM_faster(mvcm_np[j], poi_num)) / node_num
                 if gain_tmp > max_gain: max_gain = gain_tmp
                 gain_total[i, j] = gain_tmp
             # 聚合增益
@@ -96,6 +95,6 @@ def ha(c_num, partition_fast):
 
         # print('c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, adj, degree, m), '; MVCM_NEW is ', MVCM_faster(mvcm_np, poi_num, node_num, NC, c_num))
 
-    print('c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, main.adj, main.degree, main.m),
-          '; MVCM_NEW is ', MVCM_faster(mvcm_np, main.poi_num, main.node_num, NC, c_num))
+    print('c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, adj, degree, m),
+          '; MVCM_NEW is ', MVCM_faster(mvcm_np, poi_num, node_num, NC, c_num))
     return partition_fast, c_num, mvcm_np, NC

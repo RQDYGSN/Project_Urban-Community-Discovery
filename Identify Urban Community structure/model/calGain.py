@@ -1,26 +1,26 @@
 import numpy as np
-import main
 
 def calculate_gain_professional_faster(node, co, cd, lamda0, lamda, mvcm_co_tmp, mvcm_cd_tmp, modularity_co_tmp,
-                                       modularity_cd_tmp, last_cm, com_to_n, nc_co, nc_cd, c_num):
+                                       modularity_cd_tmp, last_cm, com_to_n, nc_co, nc_cd, c_num, degree, mm, m, adj,
+                                       features, poi_num, node_num):
     # 计算modularity增益
     gain_modularity = modularity_cd_tmp[node] - modularity_co_tmp[node]
     if cd == -1:
-        gain_modularity = gain_modularity + main.degree[node] / main.mm * (
-                    np.sum(main.degree[com_to_n[co]]) - main.degree[node] - np.sum(main.degree[com_to_n[c_num]]))
+        gain_modularity = gain_modularity + degree[node] / mm * (
+                    np.sum(degree[com_to_n[co]]) - degree[node] - np.sum(degree[com_to_n[c_num]]))
     else:
-        gain_modularity = gain_modularity + main.degree[node] / main.mm * (
-                    np.sum(main.degree[com_to_n[co]]) - main.degree[node] - np.sum(main.degree[com_to_n[cd]]))
-    modularity_co_tmp = modularity_co_tmp - main.adj[node]
-    modularity_cd_tmp = modularity_cd_tmp + main.adj[node]
+        gain_modularity = gain_modularity + degree[node] / mm * (
+                    np.sum(degree[com_to_n[co]]) - degree[node] - np.sum(degree[com_to_n[cd]]))
+    modularity_co_tmp = modularity_co_tmp - adj[node]
+    modularity_cd_tmp = modularity_cd_tmp + adj[node]
     # 计算MVCM增益
-    node_feature = main.features[node]
+    node_feature = features[node]
     mvcm_co_tmp = mvcm_co_tmp - node_feature
     mvcm_cd_tmp = mvcm_cd_tmp + node_feature
-    new_cm = (nc_co - 1) * CM_faster(mvcm_co_tmp, main.poi_num) + (nc_cd + 1) * CM_faster(mvcm_cd_tmp, main.poi_num)
+    new_cm = (nc_co - 1) * CM_faster(mvcm_co_tmp, poi_num) + (nc_cd + 1) * CM_faster(mvcm_cd_tmp, poi_num)
     gain_mvcm = new_cm - last_cm
 
-    gain_final = lamda0 * gain_modularity * main.node_num + m * lamda * gain_mvcm
+    gain_final = lamda0 * gain_modularity * node_num + m * lamda * gain_mvcm
     # gain_final = gain_modularity + 2*m*lamda*gain_mvcm
 
     return gain_final, mvcm_co_tmp, mvcm_cd_tmp, modularity_co_tmp, modularity_cd_tmp, new_cm

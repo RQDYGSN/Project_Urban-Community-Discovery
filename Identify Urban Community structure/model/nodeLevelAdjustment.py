@@ -1,29 +1,28 @@
-from model.gain import CM_faster, MVCM_faster, Modularity, calculate_gain_professional_faster
-import main
+from model.calGain import CM_faster, MVCM_faster, Modularity, calculate_gain_professional_faster
 
 from tqdm import tqdm
 import numpy as np
 import random
 import copy
 
-def nla(c_num, partition_fast, mvcm_np, NC):
+def nla(c_num, partition_fast, mvcm_np, NC, sliding_window_length, node_num, adj, degree, mm, m, poi_num, epoch_num, lamda, features):
     # 创建滑动窗
-    sliding_window = [1] * main.sliding_window_length
-    sliding_window2 = [-1] * main.sliding_window_length
+    sliding_window = [1] * sliding_window_length
+    sliding_window2 = [-1] * sliding_window_length
 
     # 维护目标优化功能堆
     # modularity_np
-    modularity_np = np.zeros((c_num, main.node_num))
+    modularity_np = np.zeros((c_num, node_num))
     for i in tqdm(range(c_num)):
-        for j in range(main.node_num):
-            modularity_np[i, j] = np.sum(main.adj[partition_fast[i], j])
+        for j in range(node_num):
+            modularity_np[i, j] = np.sum(adj[partition_fast[i], j])
 
     print('Begin to improve performance with combo ...')
-    print('Epoch is 0; c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, main.adj, main.degree, main.m), '; MVCM_NEW is ',
-          MVCM_faster(mvcm_np, main.poi_num, main.node_num, NC, c_num))
+    print('Epoch is 0; c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, adj, degree, m), '; MVCM_NEW is ',
+          MVCM_faster(mvcm_np, poi_num, node_num, NC, c_num))
     gain_update_threshold = 0.0000001
     # gain_update_threshold = 0
-    for epoch in range(main.epoch_num):
+    for epoch in range(epoch_num):
         to_null_list = []
         # 更新滑动窗
         sliding_window = sliding_window[1::] + [0]
@@ -70,7 +69,7 @@ def nla(c_num, partition_fast, mvcm_np, NC):
                 nc_co_max = nc_co_tmp
                 nc_cd_max = nc_cd_tmp
                 # 计算初始cm
-                last_cm = nc_co_tmp * CM_faster(mvcm_co_tmp, main.poi_num) + nc_cd_tmp * CM_faster(mvcm_cd_tmp, main.poi_num)
+                last_cm = nc_co_tmp * CM_faster(mvcm_co_tmp, poi_num) + nc_cd_tmp * CM_faster(mvcm_cd_tmp, poi_num)
                 # 备份partition_fast
                 com_to_nodes_tmp = copy.deepcopy(partition_fast)
                 if cd == -1: com_to_nodes_tmp[c_num] = []
@@ -78,8 +77,8 @@ def nla(c_num, partition_fast, mvcm_np, NC):
                 for node in node_list:
                     # 计算局部增益
                     gain, mvcm_co_tmp, mvcm_cd_tmp, modularity_co_tmp, modularity_cd_tmp, last_cm = calculate_gain_professional_faster(
-                        int(node), co, cd, 1, main.lamda, mvcm_co_tmp, mvcm_cd_tmp, modularity_co_tmp, modularity_cd_tmp,
-                        last_cm, com_to_nodes_tmp, nc_co_tmp, nc_cd_tmp, c_num)
+                        int(node), co, cd, 1, lamda, mvcm_co_tmp, mvcm_cd_tmp, modularity_co_tmp, modularity_cd_tmp,
+                        last_cm, com_to_nodes_tmp, nc_co_tmp, nc_cd_tmp, c_num, degree, mm, m, adj, features, poi_num, node_num)
                     com_to_nodes_tmp[co].remove(node)
                     if cd == -1:
                         com_to_nodes_tmp[c_num].append(node)
@@ -148,7 +147,7 @@ def nla(c_num, partition_fast, mvcm_np, NC):
         sliding_window2[-1] = c_num
         if sum(sliding_window) <= gain_update_threshold and len(set(sliding_window2)) == 1: break
         # 显示一个epoch过去后的MVVCM以及modularity    MVCM_new(mvcm_np, threshold, poi_num, node_num, NC, c_num)
-        print('Epoch is ', epoch + 1, '; c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, main.adj, main.degree, main.m),
-              '; MVCM_NEW is ', MVCM_faster(mvcm_np, main.poi_num, main.node_num, NC, c_num))
+        print('Epoch is ', epoch + 1, '; c_num is ', c_num, '; Modularity is ', Modularity(partition_fast, adj, degree, m),
+              '; MVCM_NEW is ', MVCM_faster(mvcm_np, poi_num, node_num, NC, c_num))
 
     return partition_fast
